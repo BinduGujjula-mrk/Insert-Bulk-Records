@@ -1,0 +1,63 @@
+Private Sub btnClose_Click()
+Unload Me
+End Sub
+
+
+Private Sub UserForm_Activate()
+Dim strFinalApex As String
+
+
+strApex_initial = "Procedure__c objTemplateProcedure = new Procedure__c();" & vbNewLine & _
+        "List<Procedure__c> ModifierList = new List<Procedure__c>();"
+strActualPriceAPEX_initial = "Actual_Price__c objActualPrice = new Actual_Price__c();"
+strContractedPriceAPEX_initial = "Contracted_Price__c objContractPrice = new Contracted_Price__c();"
+
+For Row = 2 To 103 Step 1
+
+    'Procedure Creation
+    strApex = "objTemplateProcedure = new Procedure__c (Name = '" & Cells(Row, 1).Value & "', " & _
+        "CODE_CATEGORY__C = '" & Cells(Row, 2).Value & "', " & _
+        "RECORDTYPEID = '" & Cells(Row, 3).Value & "',  " & _
+        "Days_Units__c = " & Cells(Row, 7).Value & ",  " & _
+        "Created_using_dataloader__c = '" & Cells(Row, 10).Value & "'," & _
+        "Reference_CPT_Code__c = '" & Cells(Row, 15).Value & "');" & _
+        vbNewLine
+    '1st Modifier if present
+    If Cells(Row, 11) <> "" Then
+        strApex = strApex & "ModifierList = [select id, name from Procedure__c where Name = '" + Cells(Row, 11).Value + "'];" & vbNewLine
+        strApex = strApex & "objTemplateProcedure.Modifier1__c = ModifierList[0].id;" & vbNewLine
+    End If
+    '2nd Modifier if present
+    If Cells(Row, 12) <> "" Then
+        strApex = strApex & "ModifierList = [select id, name from Procedure__c where Name = '" + Cells(Row, 12).Value + "'];" & vbNewLine
+        strApex = strApex & "objTemplateProcedure.Modifier2__c = ModifierList[0].id;" & vbNewLine
+    End If
+    '3rd Modifier if present
+    If Cells(Row, 13) <> "" Then
+        strApex = strApex & "ModifierList = [select id, name from Procedure__c where Name = '" + Cells(Row, 13).Value + "'];" & vbNewLine
+        strApex = strApex & "objTemplateProcedure.Modifier3__c = ModifierList[0].id;" & vbNewLine
+    End If
+
+    strApex = strApex & "insert objTemplateProcedure; " & vbNewLine
+    
+    'Actual Price
+    strActualPriceAPEX = "objActualPrice = new Actual_Price__c( List_Price__c = " & Cells(Row, 6).Value & ", " & _
+        "Procedure__c = objTemplateProcedure.id, " & _
+        "Provider__c = '" & Cells(Row, 5).Value & "', " & _
+        "Pricing_Effective_Start_Date__c = Date.Parse('" & Cells(Row, 8).Value & "'), " & _
+        "Pricing_Effective_End_Date__c = Date.Parse('" & Cells(Row, 9).Value & "')); " & vbNewLine & _
+        "insert objActualPrice;"
+    
+                
+    strFinalApex = strFinalApex & vbNewLine & strApex & strActualPriceAPEX & vbNewLine
+Next
+
+'To Delete the procs that you created using this script
+strDelete = "//List<Procedure__c> ProcList = [select id from Procedure__c where modifier_1__c = 'Created using Loader'];" & _
+            vbNewLine & _
+            "//delete ProcList;" & vbNewLine
+
+
+txtApex.Text = strApex_initial & vbNewLine & strActualPriceAPEX_initial & vbNewLine & strContractedPriceAPEX_initial & vbNewLine & strFinalApex & vbNewLine & strDelete
+
+End Sub
